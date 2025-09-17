@@ -1,0 +1,24 @@
+-- Extract all clients where the 'Cancellation Letter Date' field is populated and the 'Cancellation Outcome' field is either blank or pending
+
+with DateCancellationLetter as (
+    select b.CustID, b.CategoryValue
+    from vw_SF_Categories a
+    join vw_SF_CategoryCustomer b
+        on a.CategoryID = b.CategoryId
+    where a.CategoryID = 29
+      and b.CategoryValue <> '01/01/1900 00:00:00'
+),
+CancellationOutcome as (
+    select b.CustID, b.CategoryValue
+    from vw_SF_Categories a
+    join vw_SF_CategoryCustomer b
+        on a.CategoryID = b.CategoryId
+    where a.CategoryID = 46
+      and (b.CategoryValue = '' or b.CategoryValue = 'PENDING')
+)
+select DateCancellationLetter.CustID,
+       DateCancellationLetter.CategoryValue as DateCancellationLetter,
+       CancellationOutcome.CategoryValue as CancellationOutcome
+from DateCancellationLetter
+join CancellationOutcome
+    on DateCancellationLetter.CustID = CancellationOutcome.CustID;
