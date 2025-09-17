@@ -1,0 +1,38 @@
+-- All suspended clients where there is a radio, but no radio removal job card created on the profile
+
+WITH LatestRemovals AS (
+    SELECT 
+        s.CustID,
+        MAX(s.ScheduleDate) AS LatestScheduleDate
+    FROM vw_SF_ServiceCalls_og s
+    WHERE 
+        s.JobType LIKE '%removal'
+        AND s.CustID > 1
+    GROUP BY s.CustID
+)
+
+SELECT 
+    c.CustCode, 
+    c.ClientCustDesc, 
+    c.PhysicalAddress, 
+    c.Suburb, 
+    c.SuspendDate, 
+    c.SuspendReason, 
+    r.Transmitter, 
+    r.Decoder, 
+    r.Date_Last_signal,
+    s.ServiceCallNo,
+    s.JobType,
+    ISNULL(CONVERT(VARCHAR, s.ScheduleDate, 23), 'Not Scheduled') AS ScheduleStatus
+FROM vw_SF_ClientDetails c
+INNER JOIN vw_SF_Radios r ON c.CustId = r.CustID
+LEFT JOIN LatestRemovals lr ON c.CustID = lr.CustID
+LEFT JOIN vw_SF_ServiceCalls_og s 
+    ON c.CustId = s.CustID 
+    AND s.ScheduleDate = lr.LatestScheduleDate
+    AND s.JobType LIKE '%removal'
+WHERE 
+    c.SuspendMode = 'Y'
+    AND r.Transmitter IS NOT NULL
+    AND r.Decoder NOT IN ('PHNE', 'AJAX', 'DJAX', 'CAM', 'OLA')
+ORDER BY s.ScheduleDate DESC;
