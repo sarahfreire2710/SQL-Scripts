@@ -1,0 +1,12 @@
+select 
+    b.CustID,
+    b.CategoryValue,
+    d.SuspendMode
+from vw_SF_Categories a
+join vw_SF_CategoryCustomer b
+    on a.CategoryID = b.CategoryId
+join vw_SF_ClientDetails d
+    on b.CustID = d.CustID
+where b.CategoryID = 46
+  and b.CategoryValue = 'LOST'
+  and d.SuspendMode = 'N'
